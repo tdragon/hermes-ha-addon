@@ -1,0 +1,36 @@
+name: Hermes Agent
+version: "0.1.0"
+slug: hermes
+description: Nous Research Hermes agent — gateway + dashboard
+url: "https://github.com/<your-github-user>/hermes-ha-addon/tree/main/hermes"
+arch:
+  - amd64
+  - aarch64
+# The Hermes image ships its own s6-overlay init (/init); don't let Supervisor
+# inject a second init (tini) on top of it.
+init: false
+# Embed the Hermes web dashboard (port 9119) in the HA sidebar, behind HA login.
+ingress: true
+ingress_port: 9119
+panel_icon: mdi:robot-happy
+panel_title: Hermes
+boot: auto
+startup: application
+# Publish the OpenAI-compatible API on the host so the HA Core container (and
+# other LAN clients) can reach it. The dashboard is NOT published here — Ingress
+# handles it.
+ports:
+  "8642/tcp": 8642
+ports_description:
+  "8642/tcp": Hermes OpenAI-compatible API (HA Assist / external clients)
+options:
+  api_server_key: ""
+  extra_env: []
+schema:
+  # Optional: leave empty to keep the OpenAI-compatible API disabled (dashboard
+  # still works). Set it to enable the API on 8642 for HA Assist.
+  api_server_key: "password?"
+  # Optional KEY=VALUE passthroughs written into Hermes' .env, e.g.
+  # OPENROUTER_API_KEY=sk-... or HERMES_PROFILE=default.
+  extra_env:
+    - "str"

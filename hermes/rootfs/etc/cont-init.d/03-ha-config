@@ -1,0 +1,73 @@
+#!/command/with-contenv sh
+# shellcheck shell=sh
+#
+# Render Home Assistant add-on options (/data/options.json) into Hermes'
+# .env at $HERMES_HOME/.env.
+#
+# Runs as a legacy s6-overlay cont-init step AFTER the image's own bootstrap
+# (01-hermes-setup -> stage2-hook), so $HERMES_HOME (=/data) already exists,
+# is chowned to the hermes runtime user, and seeded config is in place.
+#
+# Idempotent: only the keys this script manages are rewritten on each boot;
+# everything else already in .env (credentials, user edits) is preserved.
+set -e
+
+HERMES_HOME="${HERMES_HOME:-/data}"
+OPTIONS=/data/options.json
+ENV_FILE="$HERMES_HOME/.env"
+
+mkdir -p "$HERMES_HOME"
+
+# python3 is guaranteed present in the image's venv; use it for robust JSON
+# parsing (no jq/bashio dependency).
+/opt/hermes/.venv/bin/python3 - "$OPTIONS" "$ENV_FILE" <<'PY'
+import json, pathlib, sys
+
+options_path, env_path = sys.argv[1], sys.argv[2]
+try:
+    opts = json.loads(pathlib.Path(options_path).read_text())
+except (FileNotFoundError, ValueError):
+    opts = {}
+
+managed = {}
+key = (opts.get("api_server_key") or "").strip()
+if key:
+    managed["API_SERVER_ENABLED"] = "true"
+    managed["API_SERVER_HOST"] = "0.0.0.0"  # reachable from the HA Core container
+    managed["API_SERVER_PORT"] = "8642"
+    managed["API_SERVER_KEY"] = key
+else:
+    managed["API_SERVER_ENABLED"] = "false"
+
+# extra_env: optional ["KEY=VALUE", ...] passthroughs into .env.
+for item in opts.get("extra_env") or []:
+    if isinstance(item, str) and "=" in item:
+        k, v = item.split("=", 1)
+        k = k.strip()
+        if k:
+            managed[k] = v
+
+env = pathlib.Path(env_path)
+lines = env.read_text().splitlines() if env.exists() else []
+out, seen = [], set()
+for line in lines:
+    name = line.split("=", 1)[0].strip() if ("=" in line and not line.lstrip().startswith("#")) else None
+    if name in managed:
+        out.append(f"{name}={managed[name]}")
+        seen.add(name)
+    else:
+        out.append(line)
+for k, v in managed.items():
+    if k not in seen:
+        out.append(f"{k}={v}")
+
+env.write_text("\n".join(out) + ("\n" if out else ""))
+print(f"[ha-config] wrote {len(managed)} managed key(s) to {env_path}")
+if managed.get("API_SERVER_ENABLED") == "false":
+    print("[ha-config] api_server_key is empty -> OpenAI-compatible API on 8642 is "
+          "DISABLED. Set it in the add-on Configuration to enable HA Assist.")
+PY
+
+# Hermes runs as the (possibly UID-remapped) 'hermes' user and must be able to
+# read/rewrite its own .env; the stage2 remap already ran in 01-hermes-setup.
+chown hermes:hermes "$ENV_FILE" 2>/dev/null || true

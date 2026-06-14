@@ -1,0 +1,14 @@
+configuration:
+  api_server_key:
+    name: API server key (bearer token)
+    description: >-
+      Bearer token that clients (e.g. Home Assistant Assist or other OpenAI SDK
+      clients) must send to use the OpenAI-compatible API on port 8642. Leave
+      empty to keep that API disabled — the dashboard still works.
+  extra_env:
+    name: Extra environment variables
+    description: >-
+      Optional KEY=VALUE entries written into Hermes' .env. Examples:
+      OPENROUTER_API_KEY=sk-or-..., ANTHROPIC_API_KEY=sk-ant-..., or
+      HERMES_PROFILE=default. Not needed for OAuth/subscription providers
+      (Codex / Nous Portal / Claude Max), which you log into once via terminal.
