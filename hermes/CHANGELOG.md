@@ -1,9 +1,10 @@
 # Changelog
 
-## 0.1.0
+## 2026.6.5
 
 - Initial release: Hermes Agent **gateway + dashboard** as a Home Assistant add-on.
-- Wraps the official multi-arch `nousresearch/hermes-agent` image (amd64 / aarch64).
+- Wraps the official multi-arch `nousresearch/hermes-agent` image (amd64 / aarch64),
+  pinned to `v2026.6.5` by tag + digest for reproducible builds.
 - State persisted under `/data` via `HERMES_HOME` — included in HA backups
   (config, `.env`, provider credentials / OAuth tokens, profiles, sessions, skills).
 - Dashboard exposed via **Ingress** (9119).

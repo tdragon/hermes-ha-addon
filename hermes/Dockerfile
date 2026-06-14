@@ -1,8 +1,8 @@
 # Wrap the official multi-arch Hermes image — do not fork/rebuild Hermes.
-# Pin this to a specific tag or digest for reproducible builds and bump it
-# alongside `version` in config.yaml. `:latest` is used here for first-run
-# convenience; see DOCS.md ("Updating / pinning").
-FROM nousresearch/hermes-agent:latest
+# Pinned (tag + digest) for reproducible builds; bump this together with
+# `version` in config.yaml. Released images use CalVer (vYYYY.M.D); the
+# `latest`/`main` tags are ROLLING — never pin to them. See DOCS.md.
+FROM nousresearch/hermes-agent:v2026.6.5@sha256:9ad3b04ec916ea2c2da22358fd43b024c788d74073210695af88bfc2e63869b4
 
 # Relocate Hermes' entire home — config, .env, provider credentials / OAuth
 # tokens (incl. Codex), profiles, sessions, skills, memories — onto the add-on's
@@ -29,5 +29,5 @@ ARG BUILD_ARCH
 LABEL \
   io.hass.name="Hermes Agent" \
   io.hass.type="addon" \
-  io.hass.version="0.1.0" \
+  io.hass.version="2026.6.5" \
   io.hass.arch="aarch64|amd64"

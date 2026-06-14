@@ -78,13 +78,20 @@ should stay local.
 
 ## Updating / pinning
 
-The Dockerfile uses `nousresearch/hermes-agent:latest`. For reproducible updates:
+The Dockerfile is pinned to a concrete release (tag **and** digest), e.g.
+`nousresearch/hermes-agent:v2026.6.5@sha256:...`. Released images use CalVer
+(`vYYYY.M.D`). **Do not pin to `latest` or `main`** — they are rolling tags that
+change without notice, which makes builds non-reproducible and the add-on's version
+number meaningless.
 
-1. Edit `hermes/Dockerfile` → pin `FROM nousresearch/hermes-agent:<tag-or-@sha256:...>`.
-2. Bump `version` in `hermes/config.yaml` and add a `CHANGELOG.md` entry.
-3. Push to the repo → HA shows an **Update** button that rebuilds against the new image.
+To move to a newer Hermes:
 
-To update on `:latest` without a version bump, just **Rebuild** the add-on.
+1. Pick a tag from <https://hub.docker.com/r/nousresearch/hermes-agent/tags> and note
+   its digest (the tag page shows it, or `docker buildx imagetools inspect <tag>`).
+2. Edit `hermes/Dockerfile` → `FROM nousresearch/hermes-agent:<vYYYY.M.D>@sha256:<digest>`.
+3. Set `version` in `hermes/config.yaml` to the same `YYYY.M.D` and add a `CHANGELOG.md`
+   entry. For add-on-only changes without an image bump, append a suffix, e.g. `2026.6.5-2`.
+4. Push to the repo → HA shows an **Update** button that rebuilds against the new image.
 
 ## Troubleshooting
 

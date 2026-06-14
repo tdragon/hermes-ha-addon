@@ -1,5 +1,7 @@
 name: Hermes Agent
-version: "0.1.0"
+# Mirrors the pinned upstream image tag (CalVer). For add-on-only changes
+# without an image bump, append a suffix, e.g. "2026.6.5-2".
+version: "2026.6.5"
 slug: hermes
 description: Nous Research Hermes agent — gateway + dashboard
 url: "https://github.com/<your-github-user>/hermes-ha-addon/tree/main/hermes"
