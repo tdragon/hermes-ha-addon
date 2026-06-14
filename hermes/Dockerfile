@@ -14,6 +14,13 @@ ENV HERMES_HOME=/data
 # Always run the dashboard service; it is exposed via HA Ingress on 9119.
 ENV HERMES_DASHBOARD=1
 
+# HA Ingress reaches the dashboard over the container's network IP (not
+# loopback), so it must bind 0.0.0.0. Hermes' OAuth auth gate otherwise refuses
+# a non-loopback bind unless a DashboardAuthProvider is registered. We opt out
+# of that gate because HA Ingress already authenticates (HA login) and port 9119
+# is NOT published to the host — only Supervisor/Ingress can reach it.
+ENV HERMES_DASHBOARD_INSECURE=1
+
 # Render HA add-on options (/data/options.json) into $HERMES_HOME/.env at boot.
 # Runs after the image's own bootstrap (01-hermes-setup -> stage2-hook).
 COPY rootfs/etc/cont-init.d/03-ha-config /etc/cont-init.d/03-ha-config
@@ -29,5 +36,5 @@ ARG BUILD_ARCH
 LABEL \
   io.hass.name="Hermes Agent" \
   io.hass.type="addon" \
-  io.hass.version="2026.6.5" \
+  io.hass.version="2026.6.5.1" \
   io.hass.arch="aarch64|amd64"

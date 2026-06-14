@@ -12,7 +12,7 @@ into once (see "Choosing a model provider").
 
 | Option | Required | Purpose |
 | --- | --- | --- |
-| `api_server_key` | For HA Assist / API | Bearer token clients must send to use the OpenAI-compatible API on `8642`. Empty → that API stays **disabled** (the dashboard still works). |
+| `api_server_key` | For HA Assist / API | Bearer token clients must send to use the OpenAI-compatible API on `8642`. **Must be a strong random secret** (`openssl rand -hex 32`) — weak/placeholder values are rejected and the API refuses to start. Empty → that API stays **disabled** (the dashboard still works). |
 | `extra_env` | No | List of `KEY=VALUE` strings written into Hermes' `.env`. Use for API-key providers (e.g. `OPENROUTER_API_KEY=...`) or settings like `HERMES_PROFILE=default`. |
 
 After changing options, **Restart** the add-on — they're re-applied to `.env` on boot.
@@ -35,24 +35,32 @@ Pick whichever you want Hermes to use as its brain:
 
 ### One-time OAuth login (e.g. Codex / ChatGPT)
 
-Install the **Advanced SSH & Web Terminal** add-on, then run on the host:
+Easiest: open the **Hermes** sidebar panel (Ingress dashboard) and use its built-in
+"add provider / login" flow for `openai-codex`.
+
+CLI fallback — install the **Advanced SSH & Web Terminal** add-on, then run on the host:
 
 ```sh
 # container name is addon_<repo-slug>_hermes — confirm with: docker ps | grep hermes
 docker exec -it $(docker ps --format '{{.Names}}' | grep hermes) \
-  hermes login --provider openai-codex --no-browser
+  hermes auth add openai-codex --type oauth --no-browser
 ```
 
-It prints a URL and a code — open the URL in any browser, enter the code, authorize.
-The credential is saved under `HERMES_HOME` (`/data`), so it **persists across restarts,
-updates, and HA backups**. Then pick the default model:
+Codex uses a **device-code** flow: it prints a verification URL and a code — open the
+URL in any browser, enter the code, authorize. (`--no-browser` just stops it trying to
+launch a browser inside the container.) The credential is saved under `HERMES_HOME`
+(`/data`), so it **persists across restarts, updates, and HA backups**. Then pick the
+default model:
 
 ```sh
 docker exec -it $(docker ps --format '{{.Names}}' | grep hermes) hermes model
 ```
 
-Verify it took: **Restart** the add-on and confirm it's still logged in (Log tab, or
-`hermes status`).
+Verify with `hermes auth status` / `hermes auth list`, then **Restart** the add-on and
+confirm it's still logged in.
+
+> Note: `hermes login` was removed in newer Hermes releases — use `hermes auth` /
+> `hermes model` as above.
 
 ## Using Hermes as Home Assistant's Assist brain
 
@@ -90,11 +98,17 @@ To move to a newer Hermes:
    its digest (the tag page shows it, or `docker buildx imagetools inspect <tag>`).
 2. Edit `hermes/Dockerfile` → `FROM nousresearch/hermes-agent:<vYYYY.M.D>@sha256:<digest>`.
 3. Set `version` in `hermes/config.yaml` to the same `YYYY.M.D` and add a `CHANGELOG.md`
-   entry. For add-on-only changes without an image bump, append a suffix, e.g. `2026.6.5-2`.
+   entry. For add-on-only changes without an image bump, append a 4th segment, e.g.
+   `2026.6.5.1` (a `-N` suffix is treated as a pre-release and won't trigger an update).
 4. Push to the repo → HA shows an **Update** button that rebuilds against the new image.
 
 ## Troubleshooting
 
+- **"Refusing to bind dashboard to 0.0.0.0 ... no auth providers registered".** Hermes
+  guards non-loopback dashboard binds with an OAuth gate. This add-on sets
+  `HERMES_DASHBOARD_INSECURE=1` (in the Dockerfile) to skip it, because HA Ingress is the
+  auth layer and 9119 isn't published to the host. If you see this message, you're on an
+  image built before that env was added — Rebuild the add-on.
 - **Dashboard panel looks broken under Ingress.** Some SPA dashboards assume they're
   served at the URL root. If the Ingress panel misbehaves, as a fallback add
   `"9119/tcp": 9119` under `ports` in `config.yaml`, Rebuild, and open

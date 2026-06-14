@@ -3,8 +3,10 @@ configuration:
     name: API server key (bearer token)
     description: >-
       Bearer token that clients (e.g. Home Assistant Assist or other OpenAI SDK
-      clients) must send to use the OpenAI-compatible API on port 8642. Leave
-      empty to keep that API disabled — the dashboard still works.
+      clients) must send to use the OpenAI-compatible API on port 8642. Must be a
+      strong random secret (e.g. `openssl rand -hex 32`) — weak/placeholder values
+      are rejected and the API won't start. Leave empty to keep that API disabled
+      (the dashboard still works).
   extra_env:
     name: Extra environment variables
     description: >-
