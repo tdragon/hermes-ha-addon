@@ -2,7 +2,7 @@ name: Hermes Agent
 # Mirrors the pinned upstream image tag (CalVer). For add-on-only changes
 # without an image bump, append a 4th segment, e.g. "2026.6.5.1" (a "-N"
 # suffix would be read as a pre-release and NOT trigger an update).
-version: "2026.6.5.1"
+version: "2026.6.5.2"
 slug: hermes
 description: Nous Research Hermes agent — gateway + dashboard
 url: "https://github.com/<your-github-user>/hermes-ha-addon/tree/main/hermes"
@@ -12,9 +12,11 @@ arch:
 # The Hermes image ships its own s6-overlay init (/init); don't let Supervisor
 # inject a second init (tini) on top of it.
 init: false
-# Embed the Hermes web dashboard (port 9119) in the HA sidebar, behind HA login.
+# Embed the Hermes web dashboard in the HA sidebar, behind HA login. Ingress
+# talks to the bundled nginx on 8099, which adapts the dashboard (internal 9119)
+# to the Ingress subpath; see Dockerfile + rootfs/etc/nginx/nginx.conf.
 ingress: true
-ingress_port: 9119
+ingress_port: 8099
 panel_icon: mdi:robot-happy
 panel_title: Hermes
 boot: auto
