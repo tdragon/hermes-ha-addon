@@ -109,11 +109,14 @@ To move to a newer Hermes:
   `HERMES_DASHBOARD_INSECURE=1` (in the Dockerfile) to skip it, because HA Ingress is the
   auth layer and 9119 isn't published to the host. If you see this message, you're on an
   image built before that env was added — Rebuild the add-on.
-- **Dashboard panel looks broken under Ingress.** Some SPA dashboards assume they're
-  served at the URL root. If the Ingress panel misbehaves, as a fallback add
-  `"9119/tcp": 9119` under `ports` in `config.yaml`, Rebuild, and open
-  `http://<HA-host-IP>:9119` directly. (File an issue noting this so it can be fixed
-  properly.)
+- **Dashboard assets 404 under Ingress (panel blank, CSS/JS fail to load).**
+  Fixed since `2026.6.5.2`: a small bundled nginx translates HA's `X-Ingress-Path`
+  header into the `X-Forwarded-Prefix` Hermes uses to serve its SPA under the
+  Ingress subpath. If assets still 404, you're on an older build — Rebuild the
+  add-on. Last-resort bypass: expose Hermes directly with `"9119/tcp": 9119`
+  under `ports`, Rebuild, and open `http://<HA-host-IP>:9119` (no sidebar).
+- **Need to hand-edit a config file.** `vim-tiny` is bundled — from the SSH
+  add-on: `docker exec -it $(docker ps --format '{{.Names}}' | grep hermes) vi /data/.env`.
 - **Add-on won't start with an AppArmor / permission error.** The image does
   `usermod`/`chown` at boot. If a default-profile denial blocks it, add
   `apparmor: false` to `config.yaml` and Rebuild.
@@ -126,7 +129,8 @@ To move to a newer Hermes:
 ## What this add-on does and doesn't do
 
 - **Does:** package the official image, persist state to `/data`, expose the dashboard
-  via Ingress, and turn add-on options into Hermes `.env` settings.
+  via Ingress (with a bundled nginx that adapts it to the Ingress subpath), and turn
+  add-on options into Hermes `.env` settings.
 - **Doesn't:** fork or rebuild Hermes, manage your provider login (one-time, by you),
   or give the agent control of HA entities (that's a separate Assist/function-calling
   choice you can make later).

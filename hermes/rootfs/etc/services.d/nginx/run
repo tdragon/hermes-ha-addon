@@ -1,0 +1,7 @@
+#!/command/with-contenv sh
+# s6-overlay longrun: the HA Ingress adapter (see /etc/nginx/nginx.conf).
+# `daemon off` keeps nginx in the foreground so s6 supervises and restarts it.
+# Runs alongside the image's native s6-rc services (main-hermes, dashboard);
+# nginx retries the 127.0.0.1:9119 upstream per request, so no start ordering
+# is needed — it 502s until the dashboard is up, then recovers.
+exec nginx -g "daemon off;"

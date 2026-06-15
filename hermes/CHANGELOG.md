@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026.6.5.2
+
+- Fix: dashboard assets 404'd under HA Ingress — the SPA loaded but its CSS/JS
+  under `/assets/...` resolved to the HA host root instead of the Ingress
+  subpath. Added a small bundled **nginx** reverse proxy that translates HA's
+  `X-Ingress-Path` header into the `X-Forwarded-Prefix` header Hermes reads to
+  re-anchor the SPA (rewrites asset URLs and sets the runtime base path).
+  Ingress now points at nginx (`ingress_port: 8099`); Hermes stays internal on
+  9119. The chat/PTY tabs keep working because the `0.0.0.0` bind leaves the
+  dashboard's WebSocket peer gate open.
+- Added `vim-tiny` to the image for hand-editing config via `docker exec`.
+
 ## 2026.6.5.1
 
 - Fix: dashboard refused to start under HA Ingress ("Refusing to bind dashboard to
