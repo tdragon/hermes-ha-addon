@@ -2,7 +2,7 @@ name: Hermes Agent
 # Mirrors the pinned upstream image tag (CalVer). For add-on-only changes
 # without an image bump, append a 4th segment, e.g. "2026.6.5.1" (a "-N"
 # suffix would be read as a pre-release and NOT trigger an update).
-version: "2026.6.5.2"
+version: "2026.6.5.3"
 slug: hermes
 description: Nous Research Hermes agent — gateway + dashboard
 url: "https://github.com/<your-github-user>/hermes-ha-addon/tree/main/hermes"
@@ -28,6 +28,14 @@ ports:
   "8642/tcp": 8642
 ports_description:
   "8642/tcp": Hermes OpenAI-compatible API (HA Assist / external clients)
+# Read-only view of the Home Assistant config dir at /homeassistant, so the
+# agent can read home-assistant.log, configuration.yaml, automations, etc.
+# NOTE: `map` is static — Supervisor mounts it unconditionally; add-on options
+# cannot toggle it. Read-only keeps the agent from editing HA config; flip
+# read_only to false deliberately if you ever want that.
+map:
+  - type: homeassistant_config
+    read_only: true
 options:
   api_server_key: ""
   extra_env: []

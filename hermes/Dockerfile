@@ -57,5 +57,5 @@ ARG BUILD_ARCH
 LABEL \
   io.hass.name="Hermes Agent" \
   io.hass.type="addon" \
-  io.hass.version="2026.6.5.2" \
+  io.hass.version="2026.6.5.3" \
   io.hass.arch="aarch64|amd64"
