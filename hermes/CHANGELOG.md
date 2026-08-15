@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026.6.5.3
+
+- Mount the Home Assistant config directory **read-only** at `/homeassistant`
+  (`map: homeassistant_config`), so the agent can read `home-assistant.log`,
+  `configuration.yaml`, automations, etc. Read-only by design; see DOCS.md
+  ("Access to the Home Assistant config directory") for the `secrets.yaml`
+  caveat and how to opt into read-write.
+
 ## 2026.6.5.2
 
 - Fix: dashboard assets 404'd under HA Ingress — the SPA loaded but its CSS/JS

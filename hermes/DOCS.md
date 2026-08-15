@@ -17,6 +17,31 @@ into once (see "Choosing a model provider").
 
 After changing options, **Restart** the add-on — they're re-applied to `.env` on boot.
 
+## Access to the Home Assistant config directory
+
+The HA config directory is mounted **read-only** at `/homeassistant` inside the
+add-on, so the agent can inspect your HA setup when you ask it to:
+
+- logs: `/homeassistant/home-assistant.log` (and `.log.1`, `.log.fault`)
+- config: `/homeassistant/configuration.yaml`, `automations.yaml`, etc.
+
+Just tell Hermes where to look, e.g. *"check /homeassistant/home-assistant.log
+for errors from the last hour"*.
+
+Notes:
+
+- Supervisor mounts this unconditionally (`map` in `config.yaml` is static and
+  can't be toggled from the add-on Configuration page). It is read-only, so the
+  agent cannot modify HA config.
+- **`secrets.yaml` is readable** through this mount. The dashboard sits behind
+  HA login and the API behind `api_server_key`, so this is visible only to
+  people who can already use the agent — but anything the agent reads may also
+  be sent to your model provider. Keep that in mind before pointing it at
+  secrets.
+- If you deliberately want the agent to *edit* HA config, change
+  `read_only: true` to `false` in `config.yaml` and Rebuild — not recommended
+  as a default.
+
 ## First run
 
 1. Install, set `api_server_key` (optional), **Start**.
@@ -129,8 +154,9 @@ To move to a newer Hermes:
 ## What this add-on does and doesn't do
 
 - **Does:** package the official image, persist state to `/data`, expose the dashboard
-  via Ingress (with a bundled nginx that adapts it to the Ingress subpath), and turn
-  add-on options into Hermes `.env` settings.
+  via Ingress (with a bundled nginx that adapts it to the Ingress subpath), turn
+  add-on options into Hermes `.env` settings, and mount the HA config dir read-only
+  at `/homeassistant` for log/config inspection.
 - **Doesn't:** fork or rebuild Hermes, manage your provider login (one-time, by you),
   or give the agent control of HA entities (that's a separate Assist/function-calling
   choice you can make later).
